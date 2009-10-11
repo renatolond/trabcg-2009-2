@@ -16,8 +16,9 @@ double stepI;
 double stepJ;
 double stepK;
 double stepL;
+int fractalResolucao;
 
-int wasReshaped;
+int mudouResolucao;
 
 GLuint texture[1];
 
@@ -27,6 +28,10 @@ struct Image {
     char *data;
 };
 typedef struct Image Image;
+
+struct color{
+    double r, g, b;
+} mandel[30*15][30*15];
 
 // quick and dirty bitmap loader...for 24 bit bitmaps with 1 plane only.
 // See http://www.dcs.ed.ac.uk/~mxr/gfx/2d/BMP.txt for more info.
@@ -187,18 +192,17 @@ bool isMandelbrot(long double m, long double n, int& t)
 	return false;
 }
 
-void correctCamera()
+void correctResolucao()
 {
 	posI[0] = -2.88;
 	posI[1] = 2.88;
 	posF[0] = 2.88;
 	posF[1] = -2.88;
-	stepI = (posF[0] - posI[0])/wWidth;
-	stepK = (15.4 - (-3.0))/wWidth;
-	stepJ = (posF[1] - posI[1])/wHeight;
-	stepL = (5.7 - (-5.6))/wHeight;
-//    printf("[z:%f][%f %f] [%f %f] [%f %f]\n",winz,posI[0],posI[1],posF[0],posF[1],stepI,stepJ);
-
+	stepI = (posF[0] - posI[0])/(30*fractalResolucao);
+	stepK = (15.4 - (-3.0))/(30*fractalResolucao);
+	stepJ = (posF[1] - posI[1])/(30*fractalResolucao);
+	stepL = (5.7 - (-5.6))/(30*fractalResolucao);
+	printf("[stepI: %f ; stepJ: %f]\n",stepI, stepJ);
 }
 
 void DrawWhiteSquare()
@@ -240,45 +244,58 @@ void DrawUpperRight()
     DrawViolin();
 }
 
-void DrawUpperLeft()
+void calculaMandelbrot()
 {
-	if ( wasReshaped )
-	{
-	    correctCamera();
-	    wasReshaped = 0;
-	}
+    double k, l;
+    int i, j;
 
-    long double i,j,k,l;
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(0,0,1);
-
-    for ( i = posI[0] , k = -3.0 ; i < posF[0] ; i+=stepI , k+=stepK)
+    for ( i = 0 , k = -3.0 ; i < 30*fractalResolucao ; i++ , k+=stepK)
 	{
-		for ( j = posI[1] , l = -5.6 ; j > posF[1] ; j+=stepJ , l+=stepL)
+		for ( j = 0 , l = -5.6 ; j < 30*fractalResolucao ; j++ , l+=stepL)
 		{
 			int t;
 
 			if ( isMandelbrot(k,l,t) )
 			{
 				double g =(t/50.0);
-				glColor3f(0,g,0);
-				glBegin(GL_QUADS);
-                    glVertex2d(i,j);
-                    glVertex2d(i-stepI,j);
-                    glVertex2d(i-stepI,j-stepJ);
-                    glVertex2d(i,j-stepJ);
-				glEnd();
+				mandel[i][j].r = mandel[i][j].b = 0;
+				mandel[i][j].g = g;
 			}
 			else
 			{
-				glColor3f(0,0,1);
-				glBegin(GL_QUADS);
-                    glVertex2d(i,j);
-                    glVertex2d(i-stepI,j);
-                    glVertex2d(i-stepI,j-stepJ);
-                    glVertex2d(i,j-stepJ);
-				glEnd();
+				mandel[i][j].r = mandel[i][j].g = 0;
+				mandel[i][j].b = 1;
 			}
+		}
+	}
+}
+
+void DrawUpperLeft()
+{
+	if ( mudouResolucao )
+	{
+	    correctResolucao();
+	    calculaMandelbrot();
+	    mudouResolucao = 0;
+	}
+
+    long double k,l;
+    int i, j;
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(0,0,1);
+
+    for ( i = 0, k = posI[0] ; i < 30*fractalResolucao ; i++ , k+=stepI)
+	{
+		for ( j = 0, l = posI[1] ; j < 30*fractalResolucao ; j++ , l+=stepJ)
+		{
+			glColor3f(mandel[i][j].r,mandel[i][j].g,mandel[i][j].b);
+			glBegin(GL_QUADS);
+                glVertex2d(k,l);
+                glVertex2d(k+stepI,l);
+                glVertex2d(k+stepI,l+stepJ);
+                glVertex2d(k,l+stepJ);
+			glEnd();
 		}
 	}
 }
@@ -301,6 +318,7 @@ void DrawBorder()
 
 void display ()
 {
+    glutSetWindow(main_window);
     glClear(GL_COLOR_BUFFER_BIT);
     for ( int view = 0 ; view < 4 ; view++ )
     {
@@ -349,14 +367,26 @@ void reshape (int w, int h)
 	gluLookAt (0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	wWidth = w;
 	wHeight = h;
-	wasReshaped = 1;
+//	wasReshaped = 1;
+}
+
+void gluiCallback(int id)
+{
+    switch ( id )
+    {
+        case 1:
+            mudouResolucao = 1;
+    }
 }
 
 void createGluiControls()
 {
-  GLUI_Spinner *segment_spinner = glui->add_spinner( "Segments:", GLUI_SPINNER_INT, &segments );
-  segment_spinner->set_int_limits( 3, 60 );
-  glui->add_separator();
+    GLUI_Rollout *rollout1 = glui->add_rollout("Fractal",1);
+    GLUI_Spinner *spinner1 = glui->add_spinner_to_panel(rollout1, "Resolucao", GLUI_SPINNER_INT, &fractalResolucao, 1, gluiCallback);
+    spinner1->set_int_limits(1, 12);
+//  GLUI_Spinner *segment_spinner = glui->add_spinner( "Segments:", GLUI_SPINNER_INT, &segments );
+//  segment_spinner->set_int_limits( 3, 60 );
+//  glui->add_separator();
 }
 
 void init (void)
@@ -365,6 +395,9 @@ void init (void)
     glEnable(GL_TEXTURE_2D);
 	glClearColor (0.0, 0.0, 0.0, 0.0);
 	glShadeModel (GL_FLAT);
+	fractalResolucao = 12;
+	mudouResolucao = 1;
+	glui->sync_live();
 }
 
 int main(int argc, char* argv[])
