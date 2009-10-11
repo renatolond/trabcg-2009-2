@@ -1,4 +1,6 @@
 #include <GL/glui.h>
+#include <cmath>
+#include <vector>
 
 #define MAXITER 200
 
@@ -7,6 +9,7 @@ using namespace std;
 int main_window;
 int   segments = 8;
 GLUI *glui;
+GLUI_Listbox *listaVeloc;
 
 int wWidth, wHeight;
 int size;
@@ -17,8 +20,17 @@ double stepJ;
 double stepK;
 double stepL;
 int fractalResolucao;
-
 int mudouResolucao;
+GLuint fractalListIndex;
+
+int mudouFreq;
+float waveAmp, waveTime, waveFreq, waveLambda,t;
+int waveSkip, waveOn[5];
+vector<double> wavePoints[5];
+vector<double> waveResult(51);
+float waveColors[5][3];
+int waveSee, waveSpeed;
+int waveSkipLimit;
 
 GLuint texture[1];
 
@@ -202,7 +214,7 @@ void correctResolucao()
 	stepK = (15.4 - (-3.0))/(30*fractalResolucao);
 	stepJ = (posF[1] - posI[1])/(30*fractalResolucao);
 	stepL = (5.7 - (-5.6))/(30*fractalResolucao);
-	printf("[stepI: %f ; stepJ: %f]\n",stepI, stepJ);
+//	printf("[stepI: %f ; stepJ: %f]\n",stepI, stepJ);
 }
 
 void DrawWhiteSquare()
@@ -239,15 +251,113 @@ void DrawViolin()
     glEnd();
 }
 
+void calculaOndas()
+{
+
+    const double longitd = 0.5;
+
+    for ( int i = 0 ; i < 5 ; i++ ) wavePoints[i] = vector<double>(51);
+
+    double stepX = longitd/wavePoints[0].size();
+
+
+    for ( int j = 0 ; j < waveResult.size() ; j++ )
+        waveResult[j] = 0;
+
+    for ( int i = 0 ; i < 5 ; i++ )
+    {
+        if ( !waveOn[i] )
+            continue;
+        double amp, k, x, w;
+        amp = waveAmp/10;
+//        k = 2*M_PI/waveLambda;
+        k = 2*M_PI*(i+1.0);
+//        w = 2*M_PI/waveFreq;
+        w = 2*M_PI*(i+1.0);
+        //t = waveTime;
+        x = 0;
+        for ( int j = 0 ; j < wavePoints[i].size()-1 ; j++, x+=stepX )
+        {
+            wavePoints[i][j] = amp * sin(k*x - w*t) + amp * sin(k*x + w*t);
+            waveResult[j] += wavePoints[i][j];
+            //printf("[%lf %lf %lf %lf]\n",amp, k, w, points[i]);
+        }
+    }
+}
+
+void DrawWaves()
+{
+
+
+    if ( mudouFreq )
+    {
+        calculaOndas();
+        mudouFreq = 0;
+        waveSkip = 0;
+    }
+
+    glColor3f(0.0, 0.0, 0.0);
+
+    {
+        double x;
+        double stepX;
+        stepX = (2.44*2.0)/(waveResult.size());
+        x = -2.44;
+        glLineWidth(3);
+        glBegin(GL_LINES);
+            for ( int i = 0 ; i < waveResult.size()-1 ; i++ , x+=stepX)
+            {
+                glVertex2f(x, waveResult[i]);
+                glVertex2f(x+stepX, waveResult[i+1]);
+            }
+        glEnd();
+        glLineWidth(1);
+    }
+
+    if ( waveSee )
+    {
+        for ( int i = 0 ; i < 5 ; i++ )
+        {
+            if ( !waveOn[i] ) continue;
+        glColor3fv(waveColors[i]);
+        double x;
+        double stepX;
+        stepX = (2.44*2.0)/(wavePoints[i].size());
+        x = -2.44;
+        glLineWidth(3);
+        glBegin(GL_LINES);
+            for ( int j = 0 ; j < wavePoints[i].size()-1 ; j++ , x+=stepX)
+            {
+                glVertex2f(x, wavePoints[i][j]);
+                glVertex2f(x+stepX, wavePoints[i][j+1]);
+            }
+        glEnd();
+        glLineWidth(1);
+        }
+    }
+
+    if ( ++waveSkip > waveSkipLimit )
+    {
+        t += 0.01;
+        if ( t > 1 ) t = 0;
+        waveSkip = 0;
+        mudouFreq = 1;
+    }
+}
+
 void DrawUpperRight()
 {
     DrawViolin();
+    DrawWaves();
 }
 
 void calculaMandelbrot()
 {
     double k, l;
     int i, j;
+
+    glDeleteLists(fractalListIndex,1);
+    fractalListIndex = glGenLists(1);
 
     for ( i = 0 , k = -3.0 ; i < 30*fractalResolucao ; i++ , k+=stepK)
 	{
@@ -268,19 +378,8 @@ void calculaMandelbrot()
 			}
 		}
 	}
-}
 
-void DrawUpperLeft()
-{
-	if ( mudouResolucao )
-	{
-	    correctResolucao();
-	    calculaMandelbrot();
-	    mudouResolucao = 0;
-	}
-
-    long double k,l;
-    int i, j;
+    glNewList(fractalListIndex, GL_COMPILE);
 
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(0,0,1);
@@ -298,6 +397,21 @@ void DrawUpperLeft()
 			glEnd();
 		}
 	}
+
+	glEndList();
+}
+
+void DrawUpperLeft()
+{
+	if ( mudouResolucao )
+	{
+	    correctResolucao();
+	    calculaMandelbrot();
+	    mudouResolucao = 0;
+	}
+
+	glCallList(fractalListIndex);
+
 }
 
 void DrawBorder()
@@ -376,6 +490,20 @@ void gluiCallback(int id)
     {
         case 1:
             mudouResolucao = 1;
+            break;
+        case 2:
+            mudouFreq = 1;
+            break;
+        case 3:
+            printf("[%d %d",waveSpeed, waveSkipLimit);
+
+            if ( waveSpeed == 1 )
+                waveSkipLimit = 0;
+            else if ( waveSpeed == 2 )
+                waveSkipLimit  = 3;
+            else if ( waveSpeed == 3 )
+                waveSkipLimit = 10;
+            printf("-%d]\n",waveSkipLimit);
     }
 }
 
@@ -384,9 +512,20 @@ void createGluiControls()
     GLUI_Rollout *rollout1 = glui->add_rollout("Fractal",1);
     GLUI_Spinner *spinner1 = glui->add_spinner_to_panel(rollout1, "Resolucao", GLUI_SPINNER_INT, &fractalResolucao, 1, gluiCallback);
     spinner1->set_int_limits(1, 12);
-//  GLUI_Spinner *segment_spinner = glui->add_spinner( "Segments:", GLUI_SPINNER_INT, &segments );
-//  segment_spinner->set_int_limits( 3, 60 );
-//  glui->add_separator();
+    GLUI_Rollout *rollout2 = glui->add_rollout("Ondas",1);
+    GLUI_EditText *editTextAmp = glui->add_edittext_to_panel(rollout2, "Amplitude: ", GLUI_EDITTEXT_FLOAT, &waveAmp);
+
+    GLUI_Checkbox *check1st = glui->add_checkbox_to_panel(rollout2, "1st", &waveOn[0],2,gluiCallback);
+    GLUI_Checkbox *check2nd = glui->add_checkbox_to_panel(rollout2, "2nd", &waveOn[1],2,gluiCallback);
+    GLUI_Checkbox *check3rd = glui->add_checkbox_to_panel(rollout2, "3rd", &waveOn[2],2,gluiCallback);
+    GLUI_Checkbox *check4th = glui->add_checkbox_to_panel(rollout2, "4th", &waveOn[3],2,gluiCallback);
+    GLUI_Checkbox *check5th = glui->add_checkbox_to_panel(rollout2, "5th", &waveOn[4],2,gluiCallback);
+    GLUI_Checkbox *checkSee = glui->add_checkbox_to_panel(rollout2, "Ver orig",&waveSee,2,gluiCallback);
+    listaVeloc = glui->add_listbox_to_panel(rollout2, "Velocidade", &waveSpeed,3,gluiCallback);
+
+    listaVeloc->add_item(1, "Normal");
+    listaVeloc->add_item(2, "Lento");
+    listaVeloc->add_item(3, "Muito lento");
 }
 
 void init (void)
@@ -395,9 +534,23 @@ void init (void)
     glEnable(GL_TEXTURE_2D);
 	glClearColor (0.0, 0.0, 0.0, 0.0);
 	glShadeModel (GL_FLAT);
-	fractalResolucao = 12;
 	mudouResolucao = 1;
-	glui->sync_live();
+	fractalResolucao = 12;
+	waveAmp = 1.0;
+	waveTime = 1.0;
+    waveFreq = 1.0;
+    waveLambda = 1.0;
+    waveSkip = 0;
+    for ( int i = 0 ; i < 5 ; i++ )
+        waveOn[i] = 0;
+    mudouFreq = 1;
+    waveSee = 0;
+    waveColors[0][0] = 1.0; waveColors[0][1] = waveColors[0][2] = 0.0;
+    waveColors[1][1] = 1.0; waveColors[1][0] = waveColors[1][2] = 0.0;
+    waveColors[2][2] = 1.0; waveColors[2][0] = waveColors[2][1] = 0.0;
+    waveColors[3][0] = waveColors[3][1] = 1.0; waveColors[3][2] = 0.0;
+    waveColors[4][0] = waveColors[4][2] = 1.0; waveColors[4][1] = 0.0;
+    fractalListIndex = glGenLists(1);
 }
 
 int main(int argc, char* argv[])
@@ -410,6 +563,7 @@ int main(int argc, char* argv[])
   main_window = glutCreateWindow( "Trabalho 1 de Comp Graf" );
   glutDisplayFunc( display );
   glutReshapeFunc( reshape );
+  init();
   GLUI_Master.set_glutIdleFunc( display );
 
   glui = GLUI_Master.create_glui( "Configs" );
@@ -417,6 +571,5 @@ int main(int argc, char* argv[])
   glui->set_main_gfx_window( main_window );
 
 
-  init();
   glutMainLoop();
 }
