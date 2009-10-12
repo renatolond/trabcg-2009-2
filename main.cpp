@@ -1,6 +1,7 @@
 #include <GL/glui.h>
 #include <cmath>
 #include <vector>
+#include <cstdio>
 
 #define MAXITER 200
 
@@ -42,8 +43,9 @@ int piriMax;
 float piriA, piriB;
 
 float circleColors[10][3];
-float raios[10];
+float circleRaios[10];
 int circleSkip;
+int circleAnim;
 
 GLuint texture[1];
 
@@ -248,19 +250,20 @@ void DrawLowerRight()
     for ( int i = 0 ; i < 10 ; i++ )
     {
         glColor3fv(circleColors[i]);
-        drawCircle(raios[i]);
+        drawCircle(circleRaios[i]);
     }
 
 //    if(++circleSkip > 10)
+    if ( circleAnim )
     {
         circleSkip=0;
         int n;
         for(n=0 ; n<10; n++)
         {
-            raios[n] += 0.1;
-            if(raios[n] > 2.5 )
+            circleRaios[n] += 0.1;
+            if(circleRaios[n] > 2.5 )
             {
-                raios[n] = 0.0;
+                circleRaios[n] = 0.0;
             }
         }
     }
@@ -574,7 +577,7 @@ void gluiCallback(int id)
             mudouFreq = 1;
             break;
         case 3:
-            printf("[%d %d",waveSpeed, waveSkipLimit);
+//            printf("[%d %d",waveSpeed, waveSkipLimit);
 
             if ( waveSpeed == 1 )
                 waveSkipLimit = 0;
@@ -582,7 +585,7 @@ void gluiCallback(int id)
                 waveSkipLimit  = 3;
             else if ( waveSpeed == 3 )
                 waveSkipLimit = 10;
-            printf("-%d]\n",waveSkipLimit);
+//            printf("-%d]\n",waveSkipLimit);
     }
 }
 
@@ -608,6 +611,9 @@ void createGluiControls()
     GLUI_Rollout *rollout3 = glui->add_rollout("Piriforme",1);
     GLUI_EditText *editTextA = glui->add_edittext_to_panel(rollout3, "A: ", GLUI_EDITTEXT_FLOAT, &piriA);
     GLUI_EditText *editTextB = glui->add_edittext_to_panel(rollout3, "B: ", GLUI_EDITTEXT_FLOAT, &piriB);
+
+    GLUI_Rollout *rollout4 = glui->add_rollout("Circle",1);
+    GLUI_Checkbox *checkAnim = glui->add_checkbox_to_panel(rollout4, "Animar", &circleAnim);
 }
 
 void init (void)
@@ -633,14 +639,14 @@ void init (void)
     waveColors[3][0] = waveColors[3][1] = 1.0; waveColors[3][2] = 0.0;
     waveColors[4][0] = waveColors[4][2] = 1.0; waveColors[4][1] = 0.0;
     fractalListIndex = glGenLists(1);
-    srand(raios[3]);
+    srand(circleRaios[3]);
     for ( int i = 0 ; i < 10 ; i++ )
     {
 
         circleColors[i][0] = (double )rand() / RAND_MAX;
         circleColors[i][1] = (double )rand() / RAND_MAX;
         circleColors[i][2] = (double )rand() / RAND_MAX;
-        raios[i] = (i+1)*0.3;
+        circleRaios[i] = (i+1)*0.3;
     }
     piriA = piriB = 1;
 }
