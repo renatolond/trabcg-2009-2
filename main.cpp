@@ -32,6 +32,18 @@ float waveColors[5][3];
 int waveSee, waveSpeed;
 int waveSkipLimit;
 
+typedef struct
+{
+float x;
+float y;
+}CURVE;
+CURVE piriform, next;
+int piriMax;
+
+float circleColors[10][3];
+float raios[10];
+int circleSkip;
+
 GLuint texture[1];
 
 struct Image {
@@ -217,17 +229,40 @@ void correctResolucao()
 //	printf("[stepI: %f ; stepJ: %f]\n",stepI, stepJ);
 }
 
-void DrawWhiteSquare()
+void drawCircle(float radius)
 {
-    glColor3f(1.0f,1.0f,1.0f);
+   glBegin(GL_LINE_LOOP);
 
-	glBegin(GL_QUADS);
-		glVertex3f(-0.5,-0.5,0.0);
-		glVertex3f(-0.5,0.5,0.0);
-		glVertex3f(0.5,0.5,0.0);
-		glVertex3f(0.5,-0.5,0.0);
-	glEnd();
+   for (int i=0; i < 360; i++)
+   {
+      float degInRad = i*M_PI/180;
+      glVertex2f(cos(degInRad)*radius,sin(degInRad)*radius);
+   }
 
+   glEnd();
+}
+
+void DrawLowerRight()
+{
+    for ( int i = 0 ; i < 10 ; i++ )
+    {
+        glColor3fv(circleColors[i]);
+        drawCircle(raios[i]);
+    }
+
+//    if(++circleSkip > 10)
+    {
+        circleSkip=0;
+        int n;
+        for(n=0 ; n<10; n++)
+        {
+            raios[n] += 0.1;
+            if(raios[n] > 2.5 )
+            {
+                raios[n] = 0.0;
+            }
+        }
+    }
 }
 
 void DrawViolin()
@@ -430,6 +465,29 @@ void DrawBorder()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
+void DrawLowerLeft()
+{
+    glBegin(GL_LINES);
+    glColor3f(1.0,0.0,0.0);
+    for(int k=0;k<piriMax; k++)
+    {
+        glLineWidth(3);
+        int i = k + 270;
+        if ( i > 360 ) i - 360;
+        piriform.x = (1+sin(i*M_PI/180));
+        piriform.y = cos(i*M_PI/180)*(1+sin(i*M_PI/180));
+        next.x = (1+sin((i+1)*M_PI/180));
+        next.y = cos((i+1)*M_PI/180)*(1+sin((i+1)*M_PI/180));
+
+        glVertex2f(piriform.x,piriform.y);
+        glVertex2f(next.x,next.y);
+    }
+    glEnd();
+
+    piriMax++;
+    if ( piriMax > 360 ) piriMax = 0;
+}
+
 void display ()
 {
     glutSetWindow(main_window);
@@ -452,14 +510,14 @@ void display ()
 		}
 		else if(view==2)
 		{
-			glViewport (wWidth/2, 0, wWidth/2, wHeight/2);
-            DrawWhiteSquare();
+			glViewport (0, 0, wWidth/2, wHeight/2);
+            DrawLowerLeft();
             DrawBorder();
 		}
 		else
 		{
-			glViewport (0, 0, wWidth/2, wHeight/2);
-            DrawWhiteSquare();
+			glViewport (wWidth/2, 0, wWidth/2, wHeight/2);
+            DrawLowerRight();
             DrawBorder();
 		}
     }
@@ -551,6 +609,15 @@ void init (void)
     waveColors[3][0] = waveColors[3][1] = 1.0; waveColors[3][2] = 0.0;
     waveColors[4][0] = waveColors[4][2] = 1.0; waveColors[4][1] = 0.0;
     fractalListIndex = glGenLists(1);
+    srand(raios[3]);
+    for ( int i = 0 ; i < 10 ; i++ )
+    {
+
+        circleColors[i][0] = (double )rand() / RAND_MAX;
+        circleColors[i][1] = (double )rand() / RAND_MAX;
+        circleColors[i][2] = (double )rand() / RAND_MAX;
+        raios[i] = (i+1)*0.3;
+    }
 }
 
 int main(int argc, char* argv[])
