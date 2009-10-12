@@ -39,6 +39,7 @@ float y;
 }CURVE;
 CURVE piriform, next;
 int piriMax;
+float piriA, piriB;
 
 float circleColors[10][3];
 float raios[10];
@@ -465,8 +466,26 @@ void DrawBorder()
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
+void drawEllipse(float xradius, float yradius)
+{
+   glBegin(GL_LINE_LOOP);
+
+   for (int i=0; i < 360; i++)
+   {
+      //convert degrees into radians
+      float degInRad = i*M_PI/180;
+      glVertex2f(cos(degInRad)*xradius,sin(degInRad)*yradius);
+   }
+
+   glEnd();
+}
 void DrawLowerLeft()
 {
+    glColor3f(1.0,1.0,1.0);
+    drawEllipse(piriA, piriB);
+
+    glTranslatef(-piriA,0,0);
+
     glBegin(GL_LINES);
     glColor3f(1.0,0.0,0.0);
     for(int k=0;k<piriMax; k++)
@@ -474,15 +493,17 @@ void DrawLowerLeft()
         glLineWidth(3);
         int i = k + 270;
         if ( i > 360 ) i - 360;
-        piriform.x = (1+sin(i*M_PI/180));
-        piriform.y = cos(i*M_PI/180)*(1+sin(i*M_PI/180));
-        next.x = (1+sin((i+1)*M_PI/180));
-        next.y = cos((i+1)*M_PI/180)*(1+sin((i+1)*M_PI/180));
+        piriform.x = piriA*(1+sin(i*M_PI/180));
+        piriform.y = piriB*cos(i*M_PI/180)*(1+sin(i*M_PI/180));
+        next.x = piriA*(1+sin((i+1)*M_PI/180));
+        next.y = piriB*cos((i+1)*M_PI/180)*(1+sin((i+1)*M_PI/180));
 
         glVertex2f(piriform.x,piriform.y);
         glVertex2f(next.x,next.y);
     }
     glEnd();
+
+    glTranslatef(piriA,0,0);
 
     piriMax++;
     if ( piriMax > 360 ) piriMax = 0;
@@ -570,9 +591,9 @@ void createGluiControls()
     GLUI_Rollout *rollout1 = glui->add_rollout("Fractal",1);
     GLUI_Spinner *spinner1 = glui->add_spinner_to_panel(rollout1, "Resolucao", GLUI_SPINNER_INT, &fractalResolucao, 1, gluiCallback);
     spinner1->set_int_limits(1, 12);
+
     GLUI_Rollout *rollout2 = glui->add_rollout("Ondas",1);
     GLUI_EditText *editTextAmp = glui->add_edittext_to_panel(rollout2, "Amplitude: ", GLUI_EDITTEXT_FLOAT, &waveAmp);
-
     GLUI_Checkbox *check1st = glui->add_checkbox_to_panel(rollout2, "1st", &waveOn[0],2,gluiCallback);
     GLUI_Checkbox *check2nd = glui->add_checkbox_to_panel(rollout2, "2nd", &waveOn[1],2,gluiCallback);
     GLUI_Checkbox *check3rd = glui->add_checkbox_to_panel(rollout2, "3rd", &waveOn[2],2,gluiCallback);
@@ -580,10 +601,13 @@ void createGluiControls()
     GLUI_Checkbox *check5th = glui->add_checkbox_to_panel(rollout2, "5th", &waveOn[4],2,gluiCallback);
     GLUI_Checkbox *checkSee = glui->add_checkbox_to_panel(rollout2, "Ver orig",&waveSee,2,gluiCallback);
     listaVeloc = glui->add_listbox_to_panel(rollout2, "Velocidade", &waveSpeed,3,gluiCallback);
-
     listaVeloc->add_item(1, "Normal");
     listaVeloc->add_item(2, "Lento");
     listaVeloc->add_item(3, "Muito lento");
+
+    GLUI_Rollout *rollout3 = glui->add_rollout("Piriforme",1);
+    GLUI_EditText *editTextA = glui->add_edittext_to_panel(rollout3, "A: ", GLUI_EDITTEXT_FLOAT, &piriA);
+    GLUI_EditText *editTextB = glui->add_edittext_to_panel(rollout3, "B: ", GLUI_EDITTEXT_FLOAT, &piriB);
 }
 
 void init (void)
@@ -618,14 +642,15 @@ void init (void)
         circleColors[i][2] = (double )rand() / RAND_MAX;
         raios[i] = (i+1)*0.3;
     }
+    piriA = piriB = 1;
 }
 
 int main(int argc, char* argv[])
 {
   glutInit(&argc, argv);
   glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE);
-  glutInitWindowPosition( 50, 50 );
-  glutInitWindowSize( 500, 500 );
+  glutInitWindowPosition( 0, 50 );
+  glutInitWindowSize( 800, 800 );
 
   main_window = glutCreateWindow( "Trabalho 1 de Comp Graf" );
   glutDisplayFunc( display );
@@ -633,7 +658,7 @@ int main(int argc, char* argv[])
   init();
   GLUI_Master.set_glutIdleFunc( display );
 
-  glui = GLUI_Master.create_glui( "Configs" );
+  glui = GLUI_Master.create_glui( "Configs" , 0, 850, 50);
   createGluiControls();
   glui->set_main_gfx_window( main_window );
 
