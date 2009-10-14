@@ -7,8 +7,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin\Debug\trab1" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj\Debug\" />
+				<Option output="bin/Debug/trab1" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -19,8 +19,8 @@
 				</Linker>
 			</Target>
 			<Target title="Release">
-				<Option output="bin\Release\trab1" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj\Release\" />
+				<Option output="bin/Release/trab1" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -32,8 +32,8 @@
 				</Linker>
 			</Target>
 			<Target title="DebugLinux">
-				<Option output="bin\Debug\trab1" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj\Debug\" />
+				<Option output="bin/Debug/trab1" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -44,8 +44,8 @@
 				</Linker>
 			</Target>
 			<Target title="ReleaseLinux">
-				<Option output="bin\Release\trab1" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj\Release\" />
+				<Option output="bin/Release/trab1" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -60,7 +60,15 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="circles.cpp" />
+		<Unit filename="circles.h" />
+		<Unit filename="fractal.cpp" />
+		<Unit filename="fractal.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="piriform.cpp" />
+		<Unit filename="piriform.h" />
+		<Unit filename="standingwaves.cpp" />
+		<Unit filename="standingwaves.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />
