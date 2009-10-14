@@ -33,7 +33,7 @@ using namespace std;
 
 int main_window;
 int   segments = 8;
-GLUI *glui;
+GLUI *glui, *gluiH;
 
 int wWidth, wHeight;
 int size;
@@ -198,7 +198,38 @@ void init (void)
 	piriInit();
 
 	glui->sync_live();
+}
 
+void createHelpControls()
+{
+        gluiH->add_statictext("Para fechar essa janela, pressione 'f'!");
+        GLUI_Rollout* panAjudaFractal = gluiH->add_rollout("Fractal");
+        gluiH->add_statictext_to_panel(panAjudaFractal, "E possivel mudar a cor do fractal ou a cor de fundo");
+        gluiH->add_statictext_to_panel(panAjudaFractal, "clicando na lista na janela de configuração");
+        gluiH->add_statictext_to_panel(panAjudaFractal, "A resolucao define a qualidade do fractal");
+        GLUI_Rollout* panAjudaHarmonicas = gluiH->add_rollout("Harmonicas");
+        gluiH->add_statictext_to_panel(panAjudaHarmonicas, "Voce pode ativar quais harmonicas voce quer ver");
+        gluiH->add_statictext_to_panel(panAjudaHarmonicas, "e tambem se quer ve-las individualmente ou nao");
+        gluiH->add_statictext_to_panel(panAjudaHarmonicas, "Caso esteja muito rapido, voce pode mudar a velocidade");
+        gluiH->add_statictext_to_panel(panAjudaHarmonicas, "Amplitude define a altura das ondas");
+        GLUI_Rollout* panAjudaPiri = gluiH->add_rollout("Piriforme");
+        gluiH->add_statictext_to_panel(panAjudaPiri, "Voce pode definir os focos da elipse, A e B");
+        gluiH->add_statictext_to_panel(panAjudaPiri, "E tambem a velocidade da animacao");
+        GLUI_Rollout* panAjudaCircle = gluiH->add_rollout("Circulos");
+        gluiH->add_statictext_to_panel(panAjudaCircle, "So e possivel escolher se voce quer ve-los animados");
+        gluiH->add_statictext_to_panel(panAjudaCircle, "E em qual velocidade");
+}
+
+void keyboard(unsigned char key, int x, int y)
+{
+    if ( key == 'H' || key == 'h' )
+    {
+        gluiH->show();
+    }
+    if ( key == 'f' || key == 'F' )
+    {
+        gluiH->hide();
+    }
 }
 
 int main(int argc, char* argv[])
@@ -212,11 +243,15 @@ int main(int argc, char* argv[])
   glutDisplayFunc( display );
   glutReshapeFunc( reshape );
   GLUI_Master.set_glutIdleFunc( display );
+  GLUI_Master.set_glutKeyboardFunc( keyboard );
 
   glui = GLUI_Master.create_glui( "Configs" , 0, 850, 50);
   createGluiControls();
   init();
   glui->set_main_gfx_window( main_window );
+  gluiH = GLUI_Master.create_glui("Fractal", 0, 850, 650);
+  createHelpControls();
+  gluiH->hide();
 
 
   glutMainLoop();
