@@ -1,24 +1,49 @@
+/*************************************
+* Arquivo: fractal.cpp
+* Descrição: Contém as funções relacionadas à exibição do fractal
+* Autores: Renato dos Santos Cerqueira  (DRE: 105093538)
+*          Cláudio Sérgio Forain Júnior (DRE: 105049864)
+*
+* (C) Copyright 2009, Renato Cerqueira, Cláudio Forain
+*
+* This file is part of CompGrafProject09-2.
+*
+* CompGrafProject09-2 is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+
+* Foobar is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with CompGrafProject09-2.  If not, see <http://www.gnu.org/licenses/>.
+*
+*************************************/
+
+#include "fractal.h"
 #include <GL/glut.h>
-#include <complex>
-#include <cmath>
-
-#define MAXITER 200
-
-using namespace std;
-
-int wWidth, wHeight;
-int size;
-
-GLint viewport[4];
-GLdouble modelview[16];
-GLdouble projection[16];
 
 double posI[3], posF[3];
 double stepI;
 double stepJ;
 double stepK;
 double stepL;
-struct RGBType {float r; float g; float b;};
+int fractalResolucao;
+int mudouResolucao;
+GLuint fractalListIndex;
+
+#define MAXITER 200
+
+void fractalInit()
+{
+   	mudouResolucao = 1;
+	fractalResolucao = 12;
+
+    fractalListIndex = glGenLists(1);
+}
 
 class comp
 {
@@ -26,29 +51,26 @@ class comp
     long double re, im;
 };
 
-RGBType *pixels;
+struct color{
+    double r, g, b;
+} mandel[30*15][30*15];
 
-void init (void)
+void correctResolucao()
 {
 
-	glClearColor (0.0, 0.0, 0.0, 0.0);
-	glShadeModel (GL_FLAT);
-}
+    // Valores descobertos por tentativa e erro. São assim por causa do glPerspective e do gluLookAt
+	posI[0] = -2.88;
+	posI[1] = 2.88;
+	posF[0] = 2.88;
+	posF[1] = -2.88;
 
-void GetOGLPos(int x, int y, GLfloat z, double pos[3])
-{
-	GLfloat winX, winY, winZ;
-	GLdouble posX, posY, posZ;
-	winZ = z;
+	// Descobre a janela de desenho em unidades do OpenGL
+	stepI = (posF[0] - posI[0])/(30*fractalResolucao);
+	stepJ = (posF[1] - posI[1])/(30*fractalResolucao);
 
-	winX = (float)x;
-	winY = (float)viewport[3] - (float)y;
-
-	gluUnProject( winX, winY, winZ, modelview, projection, viewport, &posX, &posY, &posZ);
-
-	pos[0] = posX;
-	pos[1] = posY;
-	pos[2] = posZ;
+	// Descobre a janela de desenho em unidades matemáticas
+	stepK = (15.4 - (-3.0))/(30*fractalResolucao);
+	stepL = (5.7 - (-5.6))/(30*fractalResolucao);
 }
 
 bool isMandelbrot(long double m, long double n, int& t)
@@ -57,9 +79,6 @@ bool isMandelbrot(long double m, long double n, int& t)
 
 	z.re = 0;
 	z.im = 0;
-
-//	m += 0.25;
-//	n += 0.25;
 
     // A = 1 ; B = m + ni
     a.re = 1; a.im = 0;
@@ -80,6 +99,7 @@ bool isMandelbrot(long double m, long double n, int& t)
 		x = z.re;
 		y = z.im;
 
+		// Se a distância do Z até o centro for maior que 4, então ele é um ponto do fractal
 		if ( x*x + y*y > 4.0 )
 		{
 			return true;
@@ -97,154 +117,67 @@ bool isMandelbrot(long double m, long double n, int& t)
 	return false;
 }
 
+
 void calculaMandelbrot()
 {
-    int i, j, k, l, t;
+    double k, l;
+    int i, j;
 
-    for ( i = 0 , k = -3.0 ; i < wHeight ; i++, k+=stepK )
-    {
-        for( j = 0 , l = -5.6 ; j < wWidth ; j++, l += stepL )
-        {
-            int ind;
-            ind = wHeight * i + j;
+    glDeleteLists(fractalListIndex,1);
+    fractalListIndex = glGenLists(1);
 
-			if ( isMandelbrot(k,l,t) )
-			{
-				double g =(t/50.0);
-				pixels[ind].r = pixels[ind].b = 1;
-				pixels[ind].g = g;
-			}
-			else
-			{
-			    pixels[ind].r = pixels[ind].g = 1;
-			    pixels[ind].b = 1;
-			}
-        }
-    }
-}
-
-void display (void)
-{
-    long double i,j,k,l;
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(0,0,1);
-
-
-    for ( i = posI[0] , k = -3.0 ; i < posF[0] ; i+=stepI , k+=stepK)
+    for ( i = 0 , k = -3.0 ; i < 30*fractalResolucao ; i++ , k+=stepK)
 	{
-		for ( j = posI[1] , l = -5.6 ; j > posF[1] ; j+=stepJ , l+=stepL)
+		for ( j = 0 , l = -5.6 ; j < 30*fractalResolucao ; j++ , l+=stepL)
 		{
 			int t;
 
 			if ( isMandelbrot(k,l,t) )
 			{
 				double g =(t/50.0);
-				glColor3f(0,g,0);
-				glBegin(GL_QUADS);
-                    glVertex2d(i,j);
-                    glVertex2d(i-stepI,j);
-                    glVertex2d(i-stepI,j-stepJ);
-                    glVertex2d(i,j-stepJ);
-				glEnd();
+				mandel[i][j].r = mandel[i][j].b = 0;
+				mandel[i][j].g = g;
 			}
 			else
 			{
-				glColor3f(0,0,1);
-				glBegin(GL_QUADS);
-                    glVertex2d(i,j);
-                    glVertex2d(i-stepI,j);
-                    glVertex2d(i-stepI,j-stepJ);
-                    glVertex2d(i,j-stepJ);
-				glEnd();
+				mandel[i][j].r = mandel[i][j].g = 0;
+				mandel[i][j].b = 1;
 			}
 		}
 	}
 
-	//if ( pixels != 0 )
-        //glDrawPixels(wHeight,wWidth,GL_RGB,GL_FLOAT,pixels);
+    // Guarda o fractal numa lista, para desenhar mais rápido, já que o fractal pode ter muitos pontos para desenhar
+    // (30*30*12*12 = 129600) é bastante! =)
+    glNewList(fractalListIndex, GL_COMPILE);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glColor3f(0,0,1);
+        glBegin(GL_QUADS);
 
-
-	glutSwapBuffers();
+            for ( i = 0, k = posI[0] ; i < 30*fractalResolucao ; i++ , k+=stepI)
+            {
+                for ( j = 0, l = posI[1] ; j < 30*fractalResolucao ; j++ , l+=stepJ)
+                {
+                    glColor3f(mandel[i][j].r,mandel[i][j].g,mandel[i][j].b);
+                        glVertex2d(k,l);
+                        glVertex2d(k+stepI,l);
+                        glVertex2d(k+stepI,l+stepJ);
+                        glVertex2d(k,l+stepJ);
+                }
+            }
+        glEnd();
+	glEndList();
 }
 
-void correctCamera()
+void DrawUpperLeft()
 {
-
-	glGetDoublev( GL_MODELVIEW_MATRIX, modelview );
-	glGetDoublev( GL_PROJECTION_MATRIX, projection );
-	glGetIntegerv( GL_VIEWPORT, viewport );
-
-	glEnable(GL_DEPTH_TEST);
-	glClearDepth(1.0f);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	glColor3f(1,1,1);
-	glBegin(GL_QUADS);
-	glVertex3i(50,-50,0);
-	glVertex3i(50,50,0);
-	glVertex3i(-50,50,0);
-	glVertex3i(-50,-50,0);
-	glEnd();
-	GLfloat winz;
-	glReadPixels( 0, 0, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &winz );
-	GetOGLPos(0,0,winz,posI);
-	GetOGLPos(wHeight, wWidth, winz, posF);
-
-	stepI = (posF[0] - posI[0])/wWidth;
-	stepK = (15.4 - (-3.0))/wWidth;
-	stepJ = (posF[1] - posI[1])/wHeight;
-	stepL = (5.7 - (-5.6))/wHeight;
-    printf("[z:%f][%f %f] [%f %f] [%f %f]\n",winz,posI[0],posI[1],posF[0],posF[1],stepI,stepJ);
-
-	glDisable(GL_DEPTH_TEST);
-}
-
-void reshape (int w, int h)
-{
-	glViewport (0, 0, (GLsizei) w, (GLsizei) h);
-	glMatrixMode (GL_PROJECTION);
-	glLoadIdentity ();
-	gluPerspective(60.0, (GLfloat) w/(GLfloat) h, 1.0, 20.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt (0.0, 0.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-	wWidth = w;
-	wHeight = h;
-
-	if ( pixels != 0 )
+	if ( mudouResolucao )
 	{
-	    //for ( int i = 0 ; i < wHeight ; i++ )
-            //delete[] pixels[i];
-        delete[] pixels;
-        pixels = 0;
+	    correctResolucao();
+	    calculaMandelbrot();
+	    mudouResolucao = 0;
 	}
 
-    pixels = new RGBType [wHeight*wWidth];
+	glCallList(fractalListIndex);
 
-	correctCamera();
-    //calculaMandelbrot();
 }
 
-void keyboard(unsigned char key, int x, int y)
-{
-}
-
-
-int main (int argc, char **argv)
-{
-    pixels = 0;
-//    size = 0;
-	glutInit(&argc, argv);
-	glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH );
-	glutInitWindowPosition (50, 50);
-	glutInitWindowSize (500, 500);
-	glutCreateWindow (argv[0]);
-	init ();
-	glutDisplayFunc(display);
-	glutReshapeFunc(reshape);
-	glutIdleFunc(display);
-	glutKeyboardFunc(keyboard);
-	glutMainLoop();
-
-	return 0;
-}

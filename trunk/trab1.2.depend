@@ -7,8 +7,41 @@
 1255099718 source:e:\cg\trab1.2\main.cpp
 	<GL/glui.h>
 
-1255311208 source:/media/LOND/CG/trab1.2/main.cpp
+1255491808 source:/media/LOND/CG/trab1.2/main.cpp
 	<GL/glui.h>
-	<cmath>
+	"circles.h"
+	"fractal.h"
+	"piriform.h"
+	"standingwaves.h"
+
+1255492422 source:/media/LOND/CG/trab1.2/circles.cpp
+	"circles.h"
+	<GL/glut.h>
+	<math.h>
+	<stdlib.h>
+
+1255491936 /media/LOND/CG/trab1.2/circles.h
+
+1255492281 source:/media/LOND/CG/trab1.2/fractal.cpp
+	"fractal.h"
+	<GL/glut.h>
+
+1255491945 /media/LOND/CG/trab1.2/fractal.h
+
+1255491919 /media/LOND/CG/trab1.2/piriform.h
+
+1255491740 /media/LOND/CG/trab1.2/standingwaves.h
+
+1255492639 source:/media/LOND/CG/trab1.2/piriform.cpp
+	"piriform.h"
+	<GL/glut.h>
+	<math.h>
+
+1255493392 source:/media/LOND/CG/trab1.2/standingwaves.cpp
+	"standingwaves.h"
 	<vector>
+	<GL/glut.h>
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
 
