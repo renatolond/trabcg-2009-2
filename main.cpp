@@ -113,6 +113,7 @@ void gluiCallback(int id)
                 waveSkipLimit  = 3;
             else if ( waveSpeed == 3 )
                 waveSkipLimit = 10;
+            break;
         case 4:
             if ( piriSpeed == 1 )
                 piriSkipLimit = 0;
@@ -120,6 +121,7 @@ void gluiCallback(int id)
                 piriSkipLimit  = 3;
             else if ( piriSpeed == 3 )
                 piriSkipLimit = 10;
+            break;
         case 5:
             if ( circleSpeed == 1 )
                 circleSkipLimit = 0;
@@ -127,6 +129,9 @@ void gluiCallback(int id)
                 circleSkipLimit  = 3;
             else if ( circleSpeed == 3 )
                 circleSkipLimit = 10;
+            break;
+        case 6:
+            mudouResolucao =1;
 
     }
 }
@@ -136,6 +141,20 @@ void createGluiControls()
     GLUI_Rollout *rollout1 = glui->add_rollout("Fractal",1);
     GLUI_Spinner *spinner1 = glui->add_spinner_to_panel(rollout1, "Resolucao", GLUI_SPINNER_INT, &fractalResolucao, 1, gluiCallback);
     spinner1->set_int_limits(1, 12);
+    GLUI_Listbox *listaCores = glui->add_listbox_to_panel(rollout1, "Cor:", &fractalCor,6,gluiCallback);
+    listaCores->add_item(AZUL, "Azul");
+    listaCores->add_item(VERDE, "Verde");
+    listaCores->add_item(VERMELHO, "Vermelho");
+    listaCores->add_item(AMARELO, "Amarelo");
+    listaCores->add_item(ROSA, "Rosa");
+    listaCores->add_item(CIANO, "Ciano");
+    GLUI_Listbox *listaCoresFundo = glui->add_listbox_to_panel(rollout1, "Fundo:", &fractalFundo,6,gluiCallback);
+    listaCoresFundo->add_item(AZUL, "Azul");
+    listaCoresFundo->add_item(VERDE, "Verde");
+    listaCoresFundo->add_item(VERMELHO, "Vermelho");
+    listaCoresFundo->add_item(AMARELO, "Amarelo");
+    listaCoresFundo->add_item(ROSA, "Rosa");
+    listaCoresFundo->add_item(CIANO, "Ciano");
 
     GLUI_Rollout *rollout2 = glui->add_rollout("Ondas",1);
     GLUI_EditText *editTextAmp = glui->add_edittext_to_panel(rollout2, "Amplitude: ", GLUI_EDITTEXT_FLOAT, &waveAmp);
@@ -178,6 +197,8 @@ void init (void)
 	circleInit();
 	piriInit();
 
+	glui->sync_live();
+
 }
 
 int main(int argc, char* argv[])
@@ -190,11 +211,11 @@ int main(int argc, char* argv[])
   main_window = glutCreateWindow( "Trabalho 1 de Comp Graf" );
   glutDisplayFunc( display );
   glutReshapeFunc( reshape );
-  init();
   GLUI_Master.set_glutIdleFunc( display );
 
   glui = GLUI_Master.create_glui( "Configs" , 0, 850, 50);
   createGluiControls();
+  init();
   glui->set_main_gfx_window( main_window );
 
 

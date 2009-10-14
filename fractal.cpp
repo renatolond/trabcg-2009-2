@@ -32,18 +32,12 @@ double stepJ;
 double stepK;
 double stepL;
 int fractalResolucao;
+int fractalCor;
+int fractalFundo;
 int mudouResolucao;
 GLuint fractalListIndex;
 
 #define MAXITER 200
-
-void fractalInit()
-{
-   	mudouResolucao = 1;
-	fractalResolucao = 12;
-
-    fractalListIndex = glGenLists(1);
-}
 
 class comp
 {
@@ -53,7 +47,24 @@ class comp
 
 struct color{
     double r, g, b;
-} mandel[30*15][30*15];
+} mandel[30*15][30*15], fractal[6];
+
+void fractalInit()
+{
+   	mudouResolucao = 1;
+	fractalResolucao = 12;
+	fractalCor = AZUL;
+	fractalFundo = VERMELHO;
+
+    fractalListIndex = glGenLists(1);
+
+    fractal[VERMELHO].r = 1; fractal[VERMELHO].g = fractal[VERMELHO].b = 0;
+    fractal[AZUL].b = 1; fractal[AZUL].g = fractal[AZUL].r = 0;
+    fractal[VERDE].g = 1; fractal[VERDE].r = fractal[VERDE].b = 0;
+    fractal[ROSA].r = fractal[ROSA].b = 1; fractal[ROSA].g = 0;
+    fractal[CIANO].g = fractal[CIANO].b = 1; fractal[CIANO].r = 0;
+    fractal[AMARELO].r = fractal[AMARELO].g = 1 ; fractal[AMARELO].b = 0;
+}
 
 void correctResolucao()
 {
@@ -135,13 +146,15 @@ void calculaMandelbrot()
 			if ( isMandelbrot(k,l,t) )
 			{
 				double g =(t/50.0);
-				mandel[i][j].r = mandel[i][j].b = 0;
-				mandel[i][j].g = g;
+				mandel[i][j].r = g*fractal[fractalCor].r;
+				mandel[i][j].b = g*fractal[fractalCor].b;
+				mandel[i][j].g = g*fractal[fractalCor].g;
 			}
 			else
 			{
-				mandel[i][j].r = mandel[i][j].g = 0;
-				mandel[i][j].b = 1;
+				mandel[i][j].r = fractal[fractalFundo].r;
+				mandel[i][j].g = fractal[fractalFundo].g;
+				mandel[i][j].b = fractal[fractalFundo].b;
 			}
 		}
 	}

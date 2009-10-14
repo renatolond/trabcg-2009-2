@@ -28,6 +28,18 @@
 
 extern int mudouResolucao;
 extern int fractalResolucao;
+extern int fractalCor;
+extern int fractalFundo;
+
+enum cores
+{
+    AZUL,
+    VERMELHO,
+    VERDE,
+    AMARELO,
+    ROSA,
+    CIANO
+};
 
 void fractalInit();
 void DrawUpperLeft();
