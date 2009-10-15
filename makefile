@@ -1,3 +1,5 @@
+# Autores: Renato dos Santos Cerqueira  (DRE: 105093538)
+#          Cláudio Sérgio Forain Júnior (DRE: 105049864)
 CC = g++
 CFLAGS = -Wall -O2
 COMPILE = $(CC) $(CFLAGS) -c
