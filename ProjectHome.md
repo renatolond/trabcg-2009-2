@@ -1,0 +1,1 @@
+Task Assignment of the Computer Graphics discipline at 2009/2. The job was to make a 4-viewports program using OpenGL+Glut+Glui. The first three viewports were locked at a certain task, and the 4th was of free choice.
